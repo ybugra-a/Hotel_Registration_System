@@ -47,6 +47,7 @@ class OtelKayitApp(QMainWindow):
         # Tab widget
         self.tabs = QTabWidget()
         self.tabs.setObjectName("mainTabs")
+        self.tabs.currentChanged.connect(self._on_tab_changed)
         main_layout.addWidget(self.tabs)
 
         # Sekmeleri olustur
@@ -105,6 +106,15 @@ class OtelKayitApp(QMainWindow):
         self.ayarlar_modulu = Ayarlar(self.data_manager)
         self.ayarlar_modulu.oda_degisti.connect(self._refresh_all)
         self.tabs.addTab(self.ayarlar_modulu, "⚙️  Ayarlar")
+
+    def _on_tab_changed(self, index):
+        """Sekme degistiginde ilgili paneli guncelle"""
+        # Ayarlar sekmesi (index 3) acildiginda oda listesini guncelle
+        if index == 3:
+            self.ayarlar_modulu.refresh()
+        # Oda durumu sekmesi (index 1)
+        elif index == 1:
+            self.oda_paneli.refresh()
 
     def _on_kayit_yapildi(self):
         self.aktif_panel.refresh()
