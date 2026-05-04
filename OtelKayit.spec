@@ -1,27 +1,21 @@
 # -*- mode: python ; coding: utf-8 -*-
-# OtelKayit.spec - PyInstaller yapilandirma dosyasi
 
 import os
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 
 block_cipher = None
 
-# PyQt5 eklentileri
 hiddenimports = collect_submodules('PyQt5')
 hiddenimports += [
-    'openpyxl',
-    'openpyxl.cell',
-    'openpyxl.styles',
-    'openpyxl.utils',
-    'openpyxl.workbook',
-    'openpyxl.worksheet',
-    'openpyxl.writer',
-    'openpyxl.reader',
-    'pkg_resources.py2_warn',
+    'openpyxl', 'openpyxl.cell', 'openpyxl.styles',
+    'openpyxl.utils', 'openpyxl.workbook', 'openpyxl.worksheet',
+    'openpyxl.writer', 'openpyxl.reader',
 ]
 
 datas = []
 datas += collect_data_files('openpyxl')
+# Ikon dosyasini dahil et
+datas += [('src/otel_icon.png', '.')]
 
 a = Analysis(
     ['src/main.py'],
@@ -51,13 +45,12 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,          # Konsol penceresi acilmasin
+    console=False,
     disable_windowed_traceback=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,              # Icon eklemek isterseniz: icon='otel.ico'
-    version_file=None,
+    icon='otel.ico',
 )
 
 coll = COLLECT(

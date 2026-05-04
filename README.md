@@ -1,81 +1,95 @@
-# Hotel Registration and Room Management System
+# Otel Kayit ve Oda Yonetim Sistemi
+## Kurulum ve Derleme Kilavuzu
 
-A lightweight Windows desktop application for hotel receptionists to manage guest registrations and room availability. Built with Python, PyQt5, and Excel-based data storage.
+---
 
-## Features
-
-- **Guest Registration** — Record guest details with TC ID validation and autocomplete for returning guests
-- **Active Guests Panel** — View all checked-in guests at a glance, with edit and checkout functionality
-- **Room Status Panel** — Real-time overview of all rooms (available / occupied)
-- **Search & Archive** — Search across all historical records by name, surname, or TC ID with year/quarter filters
-- **Backup Reminder** — Automatic warning if data has not been backed up in over 30 days
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Language | Python 3.x |
-| UI | PyQt5 |
-| Data storage | openpyxl (Excel .xlsx) |
-| Distribution | PyInstaller + Inno Setup |
-| Target OS | Windows |
-
-## Data Structure
-
-All records are stored in a single `kayitlar.xlsx` file. Sheets are named by year and quarter: `2025_Q1`, `2025_Q2`, `2025_Q3`, `2025_Q4`. A new quarter sheet is created automatically when needed. Room status is tracked in a separate `Odalar` sheet within the same file.
-
-## File Structure
+## KLASOR YAPISI
 
 ```
-C:/OtelKayit/
-  app/
-    OtelKayit.exe
-  data/
-    kayitlar.xlsx
-  config/
-    ayarlar.cfg
+OtelKayit/
+  src/                    ← Python kaynak kodlari
+    main.py
+    data_manager.py
+    kayit_modulu.py
+    aktif_musteri_paneli.py
+    oda_durumu_paneli.py
+    arama_arsiv.py
+    ayarlar.py
+    styles.py
+  OtelKayit.spec          ← PyInstaller yapilandirmasi
+  setup.iss               ← Inno Setup kurulum scripti
+  build.bat               ← Otomatik derleme betigi
+  requirements.txt        ← Python bagimliliklar
+  README.md               ← Bu dosya
 ```
 
-## Getting Started
+---
 
-### Requirements
+## ADIM 1 - PYTHON KUR
 
-- Python 3.x (with "Add to PATH" checked during installation)
-- Inno Setup 6 (for building the installer)
+1. https://python.org/downloads adresine git
+2. "Download Python 3.x.x" butonuna tikla
+3. Kurulum sirasinda **"Add Python to PATH"** kutucugunu mutlaka isaretle
+4. Kurulumu tamamla
 
-### Build
+Kontrol: Komut satirinda `python --version` yazinca versiyon gormeli.
 
-```
-cd C:\OtelKayit
-build.bat
-```
+---
 
-The build script will automatically install dependencies, compile with PyInstaller, and package with Inno Setup. The output installer will be at `dist\installer\OtelKayitKurulum.exe`.
+## ADIM 2 - INNO SETUP KUR
 
-### Install on target machine
+1. https://jrsoftware.org/isdl.php adresine git
+2. "Inno Setup 6.x.x" indir
+3. Varsayilan ayarlarla kur
 
-Run `OtelKayitKurulum.exe` on the target Windows machine. The installer creates the folder structure, registers the application, and adds a desktop shortcut.
+---
 
-## Modules
+## ADIM 3 - DERLE (TEK TIKLA)
 
-**Registration Module** — Form with TC ID, name, surname, room selection (available rooms only), check-in/out dates, and payment info. Autocomplete suggests returning guests based on previous records.
+1. Bu klasoru bir yere kopyala (orn: `C:\OtelKayitBuild\`)
+2. `build.bat` dosyasina **cift tikla**
+3. Siyah pencere acilacak, islemleri izle
+4. Tamamlaninca `dist\installer\OtelKayitKurulum.exe` olusacak
 
-**Active Guests Panel** — Shows all guests with status `Aktif`. Each card displays payment status — a red warning is shown if payment has not been recorded. Supports inline edit and one-click checkout.
+---
 
-**Room Status Panel** — Grid view of all rooms. Green = available, red = occupied. Room list feeds directly into the registration form dropdown.
+## ADIM 4 - HEDEF BILGISAYARA KUR
 
-**Search & Archive** — Full-history search across all quarters and years. Filterable by year, quarter, and status.
+1. `OtelKayitKurulum.exe` dosyasini USB bellee kopyala
+2. Hedef bilgisayarda USB'den calistir
+3. Kurulum sihirbazini takip et
+4. Bitince masaustunde "Otel Kayit Sistemi" kisayolu olusur
 
-**Settings** — Add or remove rooms, trigger manual backup, view application info.
+---
 
-## Versioning
+## ILK KULLANIM
 
-This project follows a simple version tag system on GitHub releases.
+- Uygulama ilk acildiginda otomatik olarak `C:\OtelKayit\` yapisi olusur
+- Ayarlar sekmesinden odalar ekle (101, 102, 103 vb.)
+- Kayit formundan ilk musteri kaydini gir
 
-| Version | Description |
-|---|---|
-| v0.1 | First working release — all core modules functional |
+---
 
-## License
+## VERI YEDEKLEME
 
-For internal use only.
+- `C:\OtelKayit\data\kayitlar.xlsx` tum verileri icerir
+- Ayarlar > "Simdi Yedekle" butonu ile yedek al
+- Her 30 gunde bir uygulama acilisinda hatirlatma yapar
+
+---
+
+## SORUN GIDERME
+
+**"Python bulunamadi" hatasi:**
+- Python'u "Add to PATH" secenegiyle yeniden kur
+
+**"Inno Setup bulunamadi" uyarisi:**
+- Inno Setup'i kur ve build.bat'i tekrar calistir
+- Ya da setup.iss dosyasini Inno Setup ile manuel ac ve derle
+
+**PyQt5 import hatasi:**
+- Komut satirinda: `pip install PyQt5 --force-reinstall`
+
+**Excel dosyasi acilamadi:**
+- `C:\OtelKayit\data\` klasorunun var oldugunu kontrol et
+- Baska bir program Excel dosyasini acik tutuyorsa kapat
