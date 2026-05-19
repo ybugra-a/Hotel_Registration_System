@@ -12,26 +12,14 @@ QWidget {
 }
 QMainWindow { background-color: #1a1a2e; }
 
-/* === NAVBAR === */
-#navBar {
+/* === TITLE BAR === */
+#titleBar {
     background-color: #0f0f1a;
     border-bottom: 1px solid #2a2a3e;
 }
 #appTitle {
-    font-size: 13pt; font-weight: bold; color: #ffffff; letter-spacing: -0.3px;
+    font-size: 12pt; font-weight: bold; color: #ffffff; letter-spacing: -0.3px;
 }
-#navBtn {
-    background: transparent; color: #94a3b8; border: none;
-    border-radius: 20px; padding: 7px 18px; font-size: 10pt;
-    font-weight: 500; min-height: 34px;
-}
-#navBtn:hover { background-color: #2a2a3e; color: #e2e8f0; }
-#navBtnActive {
-    background-color: #22c55e; color: #0f0f1a; border: none;
-    border-radius: 20px; padding: 7px 18px; font-size: 10pt;
-    font-weight: 700; min-height: 34px;
-}
-#navBtnActive:hover { background-color: #16a34a; }
 
 /* === STAT KARTLARI === */
 #statKart {
