@@ -1,6 +1,6 @@
 """
-Veri Yonetimi - v0.4
-Yeni: Rezervasyon, Blacklist, Sirket Ismi, Silme
+Veri Yönetimi - v0.7
+Yeni: Takvim dosyası otomatik güncelleme
 """
 
 import os
@@ -18,7 +18,6 @@ REZERVASYON_PATH = os.path.join(DATA_DIR, "rezervasyonlar.xlsx")
 BLACKLIST_PATH = os.path.join(DATA_DIR, "blacklist.xlsx")
 CONFIG_PATH = os.path.join(CONFIG_DIR, "ayarlar.cfg")
 
-# Sutun indeksleri (kayitlar.xlsx)
 COL_ID = 1
 COL_TC = 2
 COL_ISIM = 3
@@ -34,6 +33,11 @@ COL_DURUM = 11
 DONEMLER = {1:"Q1",2:"Q1",3:"Q1",4:"Q2",5:"Q2",6:"Q2",
             7:"Q3",8:"Q3",9:"Q3",10:"Q4",11:"Q4",12:"Q4"}
 
+GUN_ISIMLERI = {
+    0: "Pazartesi", 1: "Salı", 2: "Çarşamba",
+    3: "Perşembe", 4: "Cuma", 5: "Cumartesi", 6: "Pazar"
+}
+
 
 class DataManager:
     def __init__(self):
@@ -47,9 +51,6 @@ class DataManager:
         os.makedirs(DATA_DIR, exist_ok=True)
         os.makedirs(CONFIG_DIR, exist_ok=True)
 
-    # ----------------------------------------------------------------
-    # EXCEL OLUSTURMA
-    # ----------------------------------------------------------------
     def _ensure_excel(self):
         if not os.path.exists(EXCEL_PATH):
             self._create_new_excel()
@@ -62,19 +63,19 @@ class DataManager:
         ws = wb.create_sheet(f"{now.year}_{DONEMLER[now.month]}")
         self._create_kayit_headers(ws)
         ws_oda = wb.create_sheet("Odalar")
-        ws_oda["A1"] = "Oda Numarasi"
+        ws_oda["A1"] = "Oda Numarası"
         ws_oda["B1"] = "Durum"
         self._style_header(ws_oda, 1)
         ws_oda.column_dimensions['A'].width = 15
         ws_oda.column_dimensions['B'].width = 15
         for i in range(101, 111):
-            ws_oda.append([str(i), "Musait"])
+            ws_oda.append([str(i), "Müsait"])
         wb.save(EXCEL_PATH)
 
     def _create_kayit_headers(self, ws):
-        headers = ["Kayit ID","T.C Kimlik No","Isim","Soyisim","Sirket Ismi",
-                   "Oda Numarasi","Giris Tarihi","Cikis Tarihi",
-                   "Odeme Yontemi","Odeme Tutari","Durum"]
+        headers = ["Kayıt ID","T.C Kimlik No","İsim","Soyisim","Şirket İsmi",
+                   "Oda Numarası","Giriş Tarihi","Çıkış Tarihi",
+                   "Ödeme Yöntemi","Ödeme Tutarı","Durum"]
         ws.append(headers)
         self._style_header(ws, 1)
         widths = [12,16,14,14,18,14,14,14,18,14,14]
@@ -87,14 +88,11 @@ class DataManager:
             if "Sheet" in wb.sheetnames:
                 del wb["Sheet"]
             ws = wb.create_sheet("Rezervasyonlar")
-            headers = ["Rezervasyon ID","T.C Kimlik No","Isim","Soyisim","Sirket Ismi",
-                       "Oda Numarasi","Giris Tarihi","Cikis Tarihi",
-                       "Odeme Yontemi","Odeme Tutari","Durum","Kayit Tarihi"]
+            headers = ["Rezervasyon ID","T.C Kimlik No","İsim","Soyisim","Şirket İsmi",
+                       "Oda Numarası","Giriş Tarihi","Çıkış Tarihi",
+                       "Ödeme Yöntemi","Ödeme Tutarı","Durum","Kayıt Tarihi"]
             ws.append(headers)
             self._style_header(ws, 1)
-            widths = [14,16,14,14,18,14,14,14,18,14,14,14]
-            for i, w in enumerate(widths, 1):
-                ws.column_dimensions[chr(64+i)].width = w
             wb.save(REZERVASYON_PATH)
 
     def _ensure_blacklist(self):
@@ -103,12 +101,9 @@ class DataManager:
             if "Sheet" in wb.sheetnames:
                 del wb["Sheet"]
             ws = wb.create_sheet("Blacklist")
-            headers = ["ID","T.C Kimlik No","Isim","Soyisim","Sirket Ismi","Sebep","Eklenme Tarihi"]
+            headers = ["ID","T.C Kimlik No","İsim","Soyisim","Şirket İsmi","Sebep","Eklenme Tarihi"]
             ws.append(headers)
             self._style_header(ws, 1)
-            widths = [10,16,14,14,18,30,16]
-            for i, w in enumerate(widths, 1):
-                ws.column_dimensions[chr(64+i)].width = w
             wb.save(BLACKLIST_PATH)
 
     def _ensure_config(self):
@@ -123,9 +118,6 @@ class DataManager:
             cell.font = font
             cell.alignment = Alignment(horizontal="center", vertical="center")
 
-    # ----------------------------------------------------------------
-    # CONFIG
-    # ----------------------------------------------------------------
     def _load_config(self):
         try:
             with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
@@ -156,11 +148,8 @@ class DataManager:
         self._save_config(config)
 
     def get_backup_date(self):
-        return self._load_config().get("son_yedekleme", "Hic yedeklenmedi")
+        return self._load_config().get("son_yedekleme", "Hiç yedeklenmedi")
 
-    # ----------------------------------------------------------------
-    # SHEET / ID YARDIMCILARI
-    # ----------------------------------------------------------------
     def get_or_create_sheet(self, year, month):
         wb = openpyxl.load_workbook(EXCEL_PATH)
         name = f"{year}_{DONEMLER[month]}"
@@ -207,11 +196,20 @@ class DataManager:
                 row[1].value = durum
                 return
 
+    def _takvim_guncelle(self):
+        """Tüm aktif rezervasyonlar için takvim dosyalarını güncelle"""
+        try:
+            from takvim_yazici import guncelle_tum_aylar
+            rezervasyonlar = self.get_rezervasyonlar(tumu=True)
+            odalar = [o["no"] for o in self.get_odalar()]
+            guncelle_tum_aylar(rezervasyonlar, odalar)
+        except Exception as e:
+            pass  # Takvim hatası ana işlemi durdurmasın
+
     # ----------------------------------------------------------------
     # BLACKLIST
     # ----------------------------------------------------------------
     def blacklist_kontrol(self, tc):
-        """TC blacklistte mi? True/False"""
         wb = openpyxl.load_workbook(BLACKLIST_PATH)
         ws = wb["Blacklist"]
         for row in ws.iter_rows(min_row=2, values_only=True):
@@ -273,16 +271,17 @@ class DataManager:
                    giris_str, cikis_str, odeme_yon, odeme_str,
                    "Beklemede", date.today().strftime("%d/%m/%Y")])
         wb.save(REZERVASYON_PATH)
+        self._takvim_guncelle()
         return rid
 
-    def get_rezervasyonlar(self):
+    def get_rezervasyonlar(self, tumu=False):
         wb = openpyxl.load_workbook(REZERVASYON_PATH)
         ws = wb["Rezervasyonlar"]
         sonuc = []
         for row in ws.iter_rows(min_row=2, values_only=True):
             if not row[0]:
                 continue
-            if row[10] == "Iptal":
+            if not tumu and row[10] == "İptal":
                 continue
             sonuc.append({
                 "id": row[0], "tc": row[1], "isim": row[2],
@@ -294,7 +293,6 @@ class DataManager:
         return sonuc
 
     def get_bekleyen_rezervasyonlar(self):
-        """Giris tarihi bugun veya gecmis, hala Beklemede olanlar"""
         bugun = date.today()
         sonuc = []
         for r in self.get_rezervasyonlar():
@@ -308,21 +306,72 @@ class DataManager:
                 pass
         return sonuc
 
+    def get_takvim_verisi(self, yil, ay):
+        """
+        Belirli ay için takvim grid verisi döndür.
+        Returns: {
+          'odalar': ['101', '102', ...],
+          'gunler': [
+            {'tarih': date, 'gun_adi': str, 'hucreler': {'101': 'AD SOYAD', ...}},
+            ...
+          ]
+        }
+        """
+        import calendar
+        from datetime import timedelta
+
+        rezervasyonlar = self.get_rezervasyonlar()
+        odalar = sorted([o["no"] for o in self.get_odalar()],
+                        key=lambda x: int(x) if x.isdigit() else x)
+
+        gun_sayisi = calendar.monthrange(yil, ay)[1]
+        gunler = []
+
+        for g in range(1, gun_sayisi + 1):
+            gun = date(yil, ay, g)
+            hucreler = {}
+            for oda in odalar:
+                misafir = None
+                for r in rezervasyonlar:
+                    if str(r.get('oda', '')) != str(oda):
+                        continue
+                    if r.get('durum') == 'İptal':
+                        continue
+                    try:
+                        giris = datetime.strptime(str(r.get('giris', '')), "%d/%m/%Y").date()
+                        cikis_str = str(r.get('cikis', ''))
+                        if cikis_str:
+                            cikis = datetime.strptime(cikis_str, "%d/%m/%Y").date()
+                        else:
+                            cikis = giris + timedelta(days=1)
+                        if giris <= gun < cikis:
+                            misafir = f"{r.get('isim', '')} {r.get('soyisim', '')}"
+                            break
+                    except:
+                        continue
+                hucreler[oda] = misafir
+            gunler.append({
+                'tarih': gun,
+                'gun_adi': GUN_ISIMLERI[gun.weekday()],
+                'hafta_sonu': gun.weekday() in (5, 6),
+                'hucreler': hucreler
+            })
+
+        return {'odalar': odalar, 'gunler': gunler}
+
     def rezervasyon_checkin(self, rezervasyon_id):
-        """Rezervasyonu aktif kayda donustur"""
         wb_r = openpyxl.load_workbook(REZERVASYON_PATH)
         ws_r = wb_r["Rezervasyonlar"]
         r_data = None
         for row in ws_r.iter_rows(min_row=2):
             if str(row[0].value) == str(rezervasyon_id):
                 r_data = [c.value for c in row]
-                row[10].value = "Tamamlandi"
+                row[10].value = "Tamamlandı"
                 break
         if not r_data:
             return False
         wb_r.save(REZERVASYON_PATH)
 
-        # Ana kayda ekle
         now = datetime.now()
         sheet_name = self.get_or_create_sheet(now.year, now.month)
         kayit_id = self.get_next_id()
@@ -332,6 +381,7 @@ class DataManager:
                    r_data[5], r_data[6], r_data[7], r_data[8], r_data[9] or "", "Aktif"])
         self._update_oda_durumu(wb, r_data[5], "Dolu")
         wb.save(EXCEL_PATH)
+        self._takvim_guncelle()
         return True
 
     def rezervasyon_iptal(self, rezervasyon_id):
@@ -339,8 +389,9 @@ class DataManager:
         ws = wb["Rezervasyonlar"]
         for row in ws.iter_rows(min_row=2):
             if str(row[0].value) == str(rezervasyon_id):
-                row[10].value = "Iptal"
+                row[10].value = "İptal"
                 wb.save(REZERVASYON_PATH)
+                self._takvim_guncelle()
                 return True
         return False
 
@@ -351,11 +402,12 @@ class DataManager:
             if str(row[0].value) == str(rezervasyon_id):
                 ws.delete_rows(i)
                 wb.save(REZERVASYON_PATH)
+                self._takvim_guncelle()
                 return True
         return False
 
     # ----------------------------------------------------------------
-    # KAYIT (Ana)
+    # ANA KAYIT
     # ----------------------------------------------------------------
     def kayit_ekle(self, tc, isim, soyisim, sirket, oda,
                    giris, cikis, odeme_yon, odeme_tut):
@@ -373,6 +425,16 @@ class DataManager:
         wb.save(EXCEL_PATH)
         return kayit_id
 
+    def _row_to_dict(self, row, sheet):
+        return {
+            "id": row[COL_ID-1], "tc": row[COL_TC-1],
+            "isim": row[COL_ISIM-1], "soyisim": row[COL_SOYISIM-1],
+            "sirket": row[COL_SIRKET-1], "oda": row[COL_ODA-1],
+            "giris": row[COL_GIRIS-1], "cikis": row[COL_CIKIS-1],
+            "odeme_yon": row[COL_ODEME_YON-1], "odeme_tut": row[COL_ODEME_TUT-1],
+            "durum": row[COL_DURUM-1], "sheet": sheet
+        }
+
     def get_aktif_musteriler(self):
         wb = openpyxl.load_workbook(EXCEL_PATH)
         sonuc = []
@@ -384,17 +446,6 @@ class DataManager:
                     sonuc.append(self._row_to_dict(row, sn))
         return sonuc
 
-    def _row_to_dict(self, row, sheet):
-        return {
-            "id": row[COL_ID-1], "tc": row[COL_TC-1],
-            "isim": row[COL_ISIM-1], "soyisim": row[COL_SOYISIM-1],
-            "sirket": row[COL_SIRKET-1],
-            "oda": row[COL_ODA-1],
-            "giris": row[COL_GIRIS-1], "cikis": row[COL_CIKIS-1],
-            "odeme_yon": row[COL_ODEME_YON-1], "odeme_tut": row[COL_ODEME_TUT-1],
-            "durum": row[COL_DURUM-1], "sheet": sheet
-        }
-
     def cikis_yaptir(self, kayit_id, sheet_name):
         wb = openpyxl.load_workbook(EXCEL_PATH)
         ws = wb[sheet_name]
@@ -402,8 +453,8 @@ class DataManager:
             if str(row[COL_ID-1].value) == str(kayit_id):
                 oda = row[COL_ODA-1].value
                 row[COL_CIKIS-1].value = datetime.now().strftime("%d/%m/%Y")
-                row[COL_DURUM-1].value = "Cikis Yapti"
-                self._update_oda_durumu(wb, oda, "Musait")
+                row[COL_DURUM-1].value = "Çıkış Yaptı"
+                self._update_oda_durumu(wb, oda, "Müsait")
                 wb.save(EXCEL_PATH)
                 return True
         return False
@@ -425,14 +476,13 @@ class DataManager:
                 row[COL_ODEME_YON-1].value = data.get("odeme_yon")
                 row[COL_ODEME_TUT-1].value = data.get("odeme_tut")
                 if str(eski_oda) != str(yeni_oda):
-                    self._update_oda_durumu(wb, eski_oda, "Musait")
+                    self._update_oda_durumu(wb, eski_oda, "Müsait")
                     self._update_oda_durumu(wb, yeni_oda, "Dolu")
                 wb.save(EXCEL_PATH)
                 return True
         return False
 
     def kayit_sil(self, kayit_id, sheet_name):
-        """Kaydi kalici olarak sil, oda musait yap"""
         wb = openpyxl.load_workbook(EXCEL_PATH)
         ws = wb[sheet_name]
         for i, row in enumerate(ws.iter_rows(min_row=2), start=2):
@@ -440,7 +490,7 @@ class DataManager:
                 oda = row[COL_ODA-1].value
                 durum = row[COL_DURUM-1].value
                 if durum == "Aktif":
-                    self._update_oda_durumu(wb, oda, "Musait")
+                    self._update_oda_durumu(wb, oda, "Müsait")
                 ws.delete_rows(i)
                 wb.save(EXCEL_PATH)
                 return True
@@ -468,11 +518,11 @@ class DataManager:
                             arama not in str(k['tc']).lower() and
                             arama not in str(k.get('sirket','')).lower()):
                             continue
-                    if filtre.get("yil","Tumu") != "Tumu" and k["yil"] != filtre["yil"]:
+                    if filtre.get("yil","Tümü") != "Tümü" and k["yil"] != filtre["yil"]:
                         continue
-                    if filtre.get("donem","Tumu") != "Tumu" and k["donem"] != filtre["donem"]:
+                    if filtre.get("donem","Tümü") != "Tümü" and k["donem"] != filtre["donem"]:
                         continue
-                    if filtre.get("durum","Tumu") != "Tumu" and k["durum"] != filtre["durum"]:
+                    if filtre.get("durum","Tümü") != "Tümü" and k["durum"] != filtre["durum"]:
                         continue
                 sonuc.append(k)
         return sonuc
@@ -487,23 +537,23 @@ class DataManager:
         sonuc = []
         for row in wb["Odalar"].iter_rows(min_row=2, values_only=True):
             if row[0]:
-                sonuc.append({"no": str(row[0]), "durum": str(row[1]) if row[1] else "Musait"})
+                sonuc.append({"no": str(row[0]), "durum": str(row[1]) if row[1] else "Müsait"})
         return sonuc
 
     def get_musait_odalar(self):
-        return [o["no"] for o in self.get_odalar() if o["durum"] == "Musait"]
+        return [o["no"] for o in self.get_odalar() if o["durum"] == "Müsait"]
 
     def oda_ekle(self, oda_no):
         wb = openpyxl.load_workbook(EXCEL_PATH)
         if "Odalar" not in wb.sheetnames:
             ws = wb.create_sheet("Odalar")
-            ws["A1"] = "Oda Numarasi"
+            ws["A1"] = "Oda Numarası"
             ws["B1"] = "Durum"
         ws = wb["Odalar"]
         for row in ws.iter_rows(min_row=2, values_only=True):
             if str(row[0]) == str(oda_no):
                 return False
-        ws.append([str(oda_no), "Musait"])
+        ws.append([str(oda_no), "Müsait"])
         wb.save(EXCEL_PATH)
         return True
 
@@ -519,9 +569,6 @@ class DataManager:
                 return True
         return False
 
-    # ----------------------------------------------------------------
-    # AUTOCOMPLETE
-    # ----------------------------------------------------------------
     def get_autocomplete_data(self):
         kayitlar = self.get_tum_kayitlar()
         kisiler = {}

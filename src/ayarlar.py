@@ -5,6 +5,7 @@ Ayarlar Modulu - v0.4
 import os
 import shutil
 from datetime import date
+from custom_dialog import show_info, show_warning, show_error, show_question
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QListWidget, QListWidgetItem, QFrame,
@@ -42,7 +43,7 @@ class Ayarlar(QWidget):
         oda_layout.setSpacing(10)
 
         oda_baslik = QLabel("Oda Yonetimi")
-        oda_baslik.setStyleSheet("font-size: 12pt; font-weight: bold; color: #0f172a;")
+        oda_baslik.setStyleSheet("font-size: 12pt; font-weight: bold; color: #white;")
         oda_layout.addWidget(oda_baslik)
 
         ekle_row = QHBoxLayout()
@@ -59,6 +60,30 @@ class Ayarlar(QWidget):
         oda_layout.addWidget(QLabel("Mevcut odalar:"))
         self.oda_listesi = QListWidget()
         self.oda_listesi.setAlternatingRowColors(True)
+        self.oda_listesi.setStyleSheet("""
+            QListWidget {
+                background-color: #1e1e30;
+                border: 1px solid #3a3a50;
+                border-radius: 8px;
+                color: #e2e8f0;
+                font-size: 10pt;
+            }
+            QListWidget::item {
+                padding: 8px 12px;
+                border-bottom: 1px solid #2a2a3e;
+                color: #e2e8f0;
+            }
+            QListWidget::item:alternate {
+                background-color: #22223a;
+            }
+            QListWidget::item:selected {
+                background-color: rgba(59,130,246,0.20);
+                color: #3b82f6;
+            }
+            QListWidget::item:hover {
+                background-color: #2a2a3e;
+            }
+        """)
         oda_layout.addWidget(self.oda_listesi)
 
         btn_sil = QPushButton("Secili Odayi Sil")
@@ -78,7 +103,7 @@ class Ayarlar(QWidget):
         yedek_layout.setSpacing(10)
 
         yedek_baslik = QLabel("Yedekleme")
-        yedek_baslik.setStyleSheet("font-size: 12pt; font-weight: bold; color: #0f172a;")
+        yedek_baslik.setStyleSheet("font-size: 12pt; font-weight: bold; color: #ffffff;")
         yedek_layout.addWidget(yedek_baslik)
 
         self.yedek_tarih_lbl = QLabel()
@@ -110,11 +135,11 @@ class Ayarlar(QWidget):
         bilgi_layout.setContentsMargins(20, 16, 20, 16)
 
         bilgi_baslik = QLabel("Program Bilgisi")
-        bilgi_baslik.setStyleSheet("font-size: 12pt; font-weight: bold; color: #0f172a;")
+        bilgi_baslik.setStyleSheet("font-size: 12pt; font-weight: bold; color: #white;")
         bilgi_layout.addWidget(bilgi_baslik)
 
         for k, v in [("Uygulama","Otel Kayit ve Oda Yonetim Sistemi"),
-                     ("Versiyon","v0.4"), ("Teknoloji","Python 3 + PyQt5 + openpyxl")]:
+                     ("Versiyon","v0.6.1")]:
             row = QHBoxLayout()
             row.addWidget(QLabel(f"<b>{k}:</b>"))
             row.addWidget(QLabel(v))
@@ -140,30 +165,27 @@ class Ayarlar(QWidget):
     def _ekle_oda(self):
         oda_no = self.yeni_oda_edit.text().strip()
         if not oda_no:
-            QMessageBox.warning(self, "Hata", "Oda numarasi bos olamaz.")
+            show_warning(self, "Hata", "Oda numarası boş olamaz.")
             return
         if self.dm.oda_ekle(oda_no):
             self.yeni_oda_edit.clear()
             self.refresh()
             self.oda_degisti.emit()
         else:
-            QMessageBox.warning(self, "Uyari", f"Oda {oda_no} zaten mevcut.")
+            show_warning(self, "Uyarı", f"Oda {oda_no} zaten mevcut.")
 
     def _sil_oda(self):
         secili = self.oda_listesi.currentItem()
         if not secili:
-            QMessageBox.warning(self, "Uyari", "Silmek icin bir oda secin.")
+            show_warning(self, "Uyari", "Silmek için bir oda seçin.")
             return
         oda_no = secili.data(Qt.UserRole)
         durum = next((o["durum"] for o in self.dm.get_odalar() if o["no"] == oda_no), None)
         if durum == "Dolu":
-            QMessageBox.warning(self, "Uyari",
-                f"Oda {oda_no} su an dolu oldugu icin silinemez.\nOnce misafiri cikis yaptiriniz.")
+            show_warning(self, "Uyarı", f"Oda {oda_no} şu an dolu olduğu için silinemez.\nÖnce misafiri çıkış yaptırınız.")
             return
-        reply = QMessageBox.question(self, "Onay",
-            f"Oda {oda_no} listeden silinecek. Emin misiniz?",
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        reply = show_question(self, "Onay", f"Oda {oda_no} listeden silinecek. Emin misiniz?")
+        if reply:
             self.dm.oda_sil(oda_no)
             self.refresh()
             self.oda_degisti.emit()
@@ -171,7 +193,7 @@ class Ayarlar(QWidget):
     def _yedekle(self):
         excel_path = self.dm.get_excel_path()
         if not os.path.exists(excel_path):
-            QMessageBox.warning(self, "Hata", "Veri dosyasi bulunamadi.")
+            show_warning(self, "Hata", "Veri dosyası bulunamadı.")
             return
         hedef, _ = QFileDialog.getSaveFileName(
             self, "Yedek Konumu Secin",
@@ -183,6 +205,6 @@ class Ayarlar(QWidget):
             shutil.copy2(excel_path, hedef)
             self.dm.update_backup_date()
             self.refresh()
-            QMessageBox.information(self, "Basarili", f"Yedek olusturuldu!\nKonum: {hedef}")
+            show_info(self, "Başarılı", f"Yedek oluşturuldu!\nKonum: {hedef}")
         except Exception as e:
-            QMessageBox.critical(self, "Hata", f"Yedekleme basarisiz:\n{str(e)}")
+            show_error(self, "Hata", f"Yedekleme başarısız:\n{str(e)}")

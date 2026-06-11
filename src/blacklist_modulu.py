@@ -2,6 +2,7 @@
 Blacklist Modulu - v0.4
 """
 
+from custom_dialog import show_info, show_warning, show_error, show_question
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QFrame, QTableWidget, QTableWidgetItem,
@@ -35,7 +36,7 @@ class BlacklistModulu(QWidget):
         form_layout.setSpacing(10)
 
         form_title = QLabel("Kara Listeye Ekle")
-        form_title.setStyleSheet("font-size: 12pt; font-weight: bold; color: #0f172a;")
+        form_title.setStyleSheet("font-size: 12pt; font-weight: bold; color: #white;")
         form_layout.addWidget(form_title)
 
         def lbl(t):
@@ -108,7 +109,7 @@ class BlacklistModulu(QWidget):
         # Arama + baslik
         arama_row = QHBoxLayout()
         liste_baslik = QLabel("Kara Liste Kayitlari")
-        liste_baslik.setStyleSheet("font-size: 12pt; font-weight: bold; color: #0f172a;")
+        liste_baslik.setStyleSheet("font-size: 12pt; font-weight: bold; color: #white;")
         arama_row.addWidget(liste_baslik)
         arama_row.addStretch()
 
@@ -155,19 +156,19 @@ class BlacklistModulu(QWidget):
         sebep = self.sebep_edit.text().strip()
 
         if not tc or not tc.isdigit() or len(tc) != 11:
-            QMessageBox.warning(self, "Hata", "T.C. Kimlik No 11 haneli sayi olmalidir.")
+            show_warning(self, "Hata", "T.C. Kimlik No 11 haneli sayı olmalıdır.")
             return
         if not isim or not soyisim:
-            QMessageBox.warning(self, "Hata", "Ad ve Soyad zorunludur.")
+            show_warning(self, "Hata", "Ad ve Soyad zorunludur.")
             return
 
         # Zaten listede mi?
         if self.dm.blacklist_kontrol(tc):
-            QMessageBox.warning(self, "Uyari", "Bu TC numarasi zaten Kara Liste'de!")
+            show_warning(self, "Uyari", "Bu T.C. numarası zaten Kara Liste'de!")
             return
 
         self.dm.blacklist_ekle(tc, isim, soyisim, sirket, sebep)
-        QMessageBox.information(self, "Basarili", f"{isim} {soyisim} Kara Liste'ye eklendi.")
+        show_info(self, "Başarılı", f"{isim} {soyisim} Kara Liste'ye eklendi.")
         self.tc_edit.clear()
         self.isim_edit.clear()
         self.soyisim_edit.clear()
@@ -178,18 +179,16 @@ class BlacklistModulu(QWidget):
     def _on_sil(self):
         row = self.tablo.currentRow()
         if row < 0:
-            QMessageBox.warning(self, "Uyari", "Lutfen silmek icin bir kayit secin.")
+            show_warning(self, "Uyari", "Lütfen silmek için bir kayıt seçin.")
             return
         bl_id = self.tablo.item(row, 0).text()
         isim = f"{self.tablo.item(row, 2).text()} {self.tablo.item(row, 3).text()}"
-        reply = QMessageBox.question(self, "Silme Onayi",
-            f"{isim} Kara Liste'den kalici olarak silinsin mi?",
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        reply = show_question(self, "Silme Onayı", f"{isim} Kara Liste'den kalıcı olarak silinsin mi?")
+        if reply:
             if self.dm.blacklist_sil(bl_id):
                 self.refresh()
             else:
-                QMessageBox.critical(self, "Hata", "Silme basarisiz.")
+                show_error(self, "Hata", "Silme başarısız.")
 
     def refresh(self):
         arama = self.arama_edit.text().strip() if hasattr(self, 'arama_edit') else ""

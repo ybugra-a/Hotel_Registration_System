@@ -3,6 +3,7 @@ Arama ve Arsiv Modulu - v0.4
 Yeni: Silme islemi, Sirket sutunu
 """
 
+from custom_dialog import show_info, show_warning, show_error, show_question
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QComboBox, QTableWidget, QTableWidgetItem,
@@ -178,23 +179,21 @@ class AramaArsiv(QWidget):
     def _on_sil(self):
         row = self.tablo.currentRow()
         if row < 0:
-            QMessageBox.warning(self, "Uyari", "Lutfen silmek icin bir kayit secin.")
+            show_warning(self, "Uyari", "Lütfen silmek için bir kayıt seçin.")
             return
         k = self.tablo.item(row, 0).data(Qt.UserRole)
         if not k:
             return
         isim = f"{k.get('isim','')} {k.get('soyisim','')}"
         durum = k.get("durum","")
-        extra = "\nBu aktif bir kayit! Oda musait durumuna gececek." if durum == "Aktif" else ""
-        reply = QMessageBox.question(self, "Kayit Silme",
-            f"{isim} kaydini kalici olarak silmek istiyor musunuz?{extra}\n\nBu islem geri alinamaz!",
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        extra = "\nBu aktif bir kayıt! Oda müsait durumuna geçecek." if durum == "Aktif" else ""
+        reply = show_question(self, "Kayıt Silme", f"{isim} kaydını kalıcı olarak silmek istiyor musunuz?{extra}\n\nBu işlem geri alınamaz!")
+        if reply:
             if self.dm.kayit_sil(k["id"], k["sheet"]):
                 self.ara()
                 self.guncelleme_gerekli.emit()
             else:
-                QMessageBox.critical(self, "Hata", "Silme islemi basarisiz.")
+                show_error(self, "Hata", "Silme işlemi başarısız.")
 
     def _sifirla(self):
         self.arama_edit.clear()

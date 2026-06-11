@@ -3,6 +3,7 @@ Kayit Modulu - v0.4
 Yeni: Rezerve Et, Sirket Ismi, Blacklist kontrolu
 """
 
+from custom_dialog import show_info, show_warning, show_error, show_question
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QComboBox, QPushButton, QDateEdit, QDoubleSpinBox,
@@ -151,11 +152,11 @@ class KayitModulu(QWidget):
         card_layout.setSpacing(0)
         main_layout.addWidget(card)
 
-        title = QLabel("Yeni Misafir Kaydi")
+        title = QLabel("Yeni Misafir Kaydı")
         title.setObjectName("panelTitle")
         card_layout.addWidget(title)
 
-        subtitle = QLabel("Asagidaki formu doldurarak yeni misafir kaydedebilirsiniz.")
+        subtitle = QLabel("Yeni kayıt için aşağıdaki formu doldurunuz.")
         subtitle.setObjectName("panelSubtitle")
         card_layout.addWidget(subtitle)
         card_layout.addSpacing(20)
@@ -197,7 +198,7 @@ class KayitModulu(QWidget):
         # TC
         layout.addWidget(self._lbl("T.C. KIMLIK NUMARASI *"))
         self.tc_edit = AutocompleteLineEdit()
-        self.tc_edit.setPlaceholderText("11 haneli kimlik numarasi")
+        self.tc_edit.setPlaceholderText("11 haneli kimlik numarası")
         self.tc_edit.setMaxLength(11)
         self.tc_edit.oneri_secildi.connect(self._fill_from_suggestion)
         layout.addWidget(self.tc_edit)
@@ -210,7 +211,7 @@ class KayitModulu(QWidget):
         c1 = QVBoxLayout(); c1.setSpacing(4)
         c1.addWidget(self._lbl("AD *"))
         self.isim_edit = AutocompleteLineEdit()
-        self.isim_edit.setPlaceholderText("Misafir adi")
+        self.isim_edit.setPlaceholderText("Misafir adı")
         self.isim_edit.oneri_secildi.connect(self._fill_from_suggestion)
         c1.addWidget(self.isim_edit)
         row1.addLayout(c1)
@@ -218,7 +219,7 @@ class KayitModulu(QWidget):
         c2 = QVBoxLayout(); c2.setSpacing(4)
         c2.addWidget(self._lbl("SOYAD *"))
         self.soyisim_edit = AutocompleteLineEdit()
-        self.soyisim_edit.setPlaceholderText("Misafir soyadi")
+        self.soyisim_edit.setPlaceholderText("Misafir soyadı")
         self.soyisim_edit.oneri_secildi.connect(self._fill_from_suggestion)
         c2.addWidget(self.soyisim_edit)
         row1.addLayout(c2)
@@ -229,7 +230,7 @@ class KayitModulu(QWidget):
         # Sirket ismi (tam genislik)
         layout.addWidget(self._lbl("SIRKET ISMI"))
         self.sirket_edit = QLineEdit()
-        self.sirket_edit.setPlaceholderText("Sirket ismi (opsiyonel)")
+        self.sirket_edit.setPlaceholderText("Şirket ismi (opsiyonel)")
         layout.addWidget(self.sirket_edit)
         layout.addSpacing(10)
 
@@ -258,7 +259,7 @@ class KayitModulu(QWidget):
         row3 = QHBoxLayout(); row3.setSpacing(10)
 
         c5 = QVBoxLayout(); c5.setSpacing(4)
-        c5.addWidget(self._lbl("GIRIS TARIHI *"))
+        c5.addWidget(self._lbl("GIRIŞ TARIHI *"))
         self.giris_date = QDateEdit()
         self.giris_date.setCalendarPopup(True)
         self.giris_date.setDate(QDate.currentDate())
@@ -268,7 +269,7 @@ class KayitModulu(QWidget):
         row3.addLayout(c5)
 
         c6 = QVBoxLayout(); c6.setSpacing(4)
-        c6.addWidget(self._lbl("CIKIS TARIHI"))
+        c6.addWidget(self._lbl("CIKIŞ TARIHI"))
         self.cikis_date = QDateEdit()
         self.cikis_date.setCalendarPopup(True)
         self.cikis_date.setDate(QDate.currentDate().addDays(1))
@@ -339,25 +340,24 @@ class KayitModulu(QWidget):
         if not data["tc"]:
             errors.append("T.C. Kimlik No zorunludur.")
         elif not data["tc"].isdigit() or len(data["tc"]) != 11:
-            errors.append("T.C. Kimlik No 11 haneli sayi olmalidir.")
+            errors.append("T.C. Kimlik No 11 haneli sayı olmalıdır.")
         if not data["isim"]:
             errors.append("Ad zorunludur.")
         if not data["soyisim"]:
             errors.append("Soyad zorunludur.")
         if not data["oda"]:
-            errors.append("Lutfen musait bir oda secin.")
+            errors.append("Lütfen musait bir oda seçin.")
         return errors
 
     def _on_kaydet(self):
         data = self._get_form_data()
         errors = self._validate(data)
         if errors:
-            QMessageBox.warning(self, "Eksik Bilgi", "\n".join(errors))
+            show_warning(self, "Eksik Bilgi", "\n".join(errors))
             return
         # Blacklist kontrolu
         if self.dm.blacklist_kontrol(data["tc"]):
-            QMessageBox.critical(self, "Kara Liste Uyarisi",
-                "Bu kisi Kara Liste'de!\n\nKayit islemi iptal edildi.")
+            show_error(self, "Kara Liste Uyarısı", "Bu kişi Kara Liste'de!\n\nKayit işlemi iptal edildi.")
             return
         try:
             kid = self.dm.kayit_ekle(
@@ -365,23 +365,20 @@ class KayitModulu(QWidget):
                 data["oda"], data["giris"], data["cikis"],
                 data["odeme_yon"], data["odeme_tut"]
             )
-            QMessageBox.information(self, "Basarili",
-                f"Kayit olusturuldu!\nID: {kid}\n"
-                f"Misafir: {data['isim']} {data['soyisim']}\nOda: {data['oda']}")
+            show_info(self, "Başarılı", f"Kayıt oluşturuldu!\nID: {kid}\nMisafir: {data['isim']} {data['soyisim']}\nOda: {data['oda']}")
             self._temizle()
             self.kayit_yapildi.emit()
         except Exception as e:
-            QMessageBox.critical(self, "Hata", f"Kayit hatasi:\n{str(e)}")
+            show_error(self, "Hata", f"Kayıt sırasında hata oluştu:\n{str(e)}")
 
     def _on_rezerve(self):
         data = self._get_form_data()
         errors = self._validate(data)
         if errors:
-            QMessageBox.warning(self, "Eksik Bilgi", "\n".join(errors))
+            show_warning(self, "Eksik Bilgi", "\n".join(errors))
             return
         if self.dm.blacklist_kontrol(data["tc"]):
-            QMessageBox.critical(self, "Kara Liste Uyarisi",
-                "Bu kisi Kara Liste'de!\n\nRezervasyon islemi iptal edildi.")
+            show_error(self, "Kara Liste Uyarısı", "Bu kişi Kara Liste'de!\n\nRezervasyon işlemi iptal edildi.")
             return
         try:
             rid = self.dm.rezervasyon_ekle(
@@ -389,14 +386,11 @@ class KayitModulu(QWidget):
                 data["oda"], data["giris"], data["cikis"],
                 data["odeme_yon"], data["odeme_tut"]
             )
-            QMessageBox.information(self, "Rezervasyon Olusturuldu",
-                f"Rezervasyon kaydedildi!\nRez. ID: {rid}\n"
-                f"Misafir: {data['isim']} {data['soyisim']}\n"
-                f"Giris Tarihi: {data['giris'].strftime('%d/%m/%Y')}")
+            show_info(self, "Rezervasyon Oluşturuldu", f"Rezervasyon kaydedildi!\nRez. ID: {rid}\nMisafir: {data['isim']} {data['soyisim']}\nGiriş Tarihi: {data['giris'].strftime('%d/%m/%Y')}")
             self._temizle()
             self.rezervasyon_yapildi.emit()
         except Exception as e:
-            QMessageBox.critical(self, "Hata", f"Rezervasyon hatasi:\n{str(e)}")
+            show_error(self, "Hata", f"Rezervasyon sırasında hata oluştu:\n{str(e)}")
 
     def _temizle(self):
         self.tc_edit.clear()

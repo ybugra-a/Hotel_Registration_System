@@ -2,6 +2,7 @@
 Aktif Musteri Paneli - v0.4
 """
 
+from custom_dialog import show_info, show_warning, show_error, show_question
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QScrollArea, QFrame, QMessageBox, QDialog,
@@ -69,7 +70,7 @@ class DuzenleDialog(QDialog):
         layout.setContentsMargins(28, 24, 28, 24)
 
         title = QLabel("Kayit Duzenleme")
-        title.setStyleSheet("font-size: 15pt; font-weight: bold; color: #ffffff;")
+        title.setStyleSheet("font-size: 13pt; font-weight: bold; color: #ffffff; background: transparent;")
         layout.addWidget(title)
 
         grid = QGridLayout()
@@ -185,7 +186,7 @@ class DuzenleDialog(QDialog):
     def _on_kaydet(self):
         tc = self.tc_edit.text().strip()
         if not tc.isdigit() or len(tc) != 11:
-            QMessageBox.warning(self, "Hata", "T.C. Kimlik No 11 haneli sayi olmalidir.")
+            show_warning(self, "Hata", "T.C. Kimlik No 11 haneli sayı olmalıdır.")
             return
         data = {
             "tc": tc,
@@ -201,7 +202,7 @@ class DuzenleDialog(QDialog):
         if self.dm.kayit_guncelle(self.musteri["id"], self.musteri["sheet"], data):
             self.accept()
         else:
-            QMessageBox.critical(self, "Hata", "Kayit guncellenemedi.")
+            show_error(self, "Hata", "Kayıt güncellenemedi.")
 
 
 class AvatarWidget(QLabel):
@@ -296,7 +297,8 @@ class MusteriKarti(QFrame):
 
         btn_sil = QPushButton("Sil")
         btn_sil.setObjectName("btnSil")
-        btn_sil.setFixedWidth(50)
+        btn_sil.setFixedWidth(52)
+        btn_sil.setFont(__import__("PyQt5.QtGui", fromlist=["QFont"]).QFont("Segoe UI", 9))
         btn_sil.clicked.connect(lambda: self.sil_clicked.emit(self.musteri))
         btn_row.addWidget(btn_sil)
 
@@ -387,22 +389,18 @@ class AktifMusteriPaneli(QWidget):
 
     def _on_cikis(self, musteri):
         isim = f"{musteri.get('isim','')} {musteri.get('soyisim','')}"
-        reply = QMessageBox.question(self, "Check-out Onayi",
-            f"{isim} icin check-out yapilsin mi?\nOda {musteri.get('oda','')} musait olacak.",
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        reply = show_question(self, "Check-out Onayı", f"{isim} için check-out yapılsın mı?\nOda {musteri.get('oda','')} müsait olacak.")
+        if reply:
             if self.dm.cikis_yaptir(musteri["id"], musteri["sheet"]):
                 self.guncelleme_gerekli.emit()
             else:
-                QMessageBox.critical(self, "Hata", "Check-out islemi basarisiz.")
+                show_error(self, "Hata", "Check-out işlemi başarısız.")
 
     def _on_sil(self, musteri):
         isim = f"{musteri.get('isim','')} {musteri.get('soyisim','')}"
-        reply = QMessageBox.question(self, "Kayit Silme",
-            f"{isim} kaydini kalici olarak silmek istiyor musunuz?\n\nBu islem geri alinamaz!",
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        reply = show_question(self, "Kayıt Silme", f"{isim} kaydını kalıcı olarak silmek istiyor musunuz?\n\nBu işlem geri alınamaz!")
+        if reply:
             if self.dm.kayit_sil(musteri["id"], musteri["sheet"]):
                 self.guncelleme_gerekli.emit()
             else:
-                QMessageBox.critical(self, "Hata", "Silme islemi basarisiz.")
+                show_error(self, "Hata", "Silme işlemi başarısız.")

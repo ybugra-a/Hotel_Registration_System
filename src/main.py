@@ -5,6 +5,7 @@ Frameless custom title bar + nav
 
 import sys
 import os
+from custom_dialog import show_info, show_warning, show_error, show_question
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QMessageBox, QPushButton, QFrame, QStackedWidget, QSizePolicy
@@ -102,7 +103,7 @@ class TitleBar(QWidget):
         logo_lbl.setStyleSheet("font-size: 14pt; color: #3b82f6; background: transparent; padding-right: 4px;")
         layout.addWidget(logo_lbl)
 
-        title_lbl = QLabel("Otel Kayit Sistemi")
+        title_lbl = QLabel("Otel Kayıt Sistemi")
         title_lbl.setObjectName("appTitle")
         title_lbl.setStyleSheet("font-size: 12pt; font-weight: bold; color: #ffffff; background: transparent; padding-right: 24px;")
         layout.addWidget(title_lbl)
@@ -114,8 +115,8 @@ class TitleBar(QWidget):
 
         # Nav sekmeleri
         nav_items = [
-            "Kayit", "Aktif Misafirler", "Rezervasyonlar",
-            "Oda Durumu", "Arsiv", "Kara Liste", "Ayarlar"
+            "Kayıt", "Aktif Misafirler", "Rezervasyonlar",
+            "Oda Durumu", "Arşiv", "Kara Liste", "Ayarlar"
         ]
         for i, label in enumerate(nav_items):
             tab = NavTab(label, i, self._nav_callback)
@@ -124,24 +125,27 @@ class TitleBar(QWidget):
 
         layout.addStretch()
 
-        # Pencere kontrol butonlari
+        # Pencere kontrol butonlari - esit boyut, ortali
         btn_style_base = """
             QPushButton {{
                 background: transparent;
                 border: none;
                 color: {color};
-                font-size: 13pt;
-                font-weight: bold;
+                font-size: 14pt;
+                font-weight: 400;
                 min-width: 46px;
                 max-width: 46px;
-                min-height: 48px;
-                max-height: 48px;
+                min-height: 46px;
+                max-height: 46px;
                 border-radius: 0px;
+                qproperty-alignment: AlignCenter;
+                padding: 0px;
+                margin: 0px;
             }}
             QPushButton:hover {{ background: {hover}; }}
         """
 
-        btn_min = QPushButton("─")
+        btn_min = QPushButton("−")
         btn_min.setStyleSheet(btn_style_base.format(color="#94a3b8", hover="#2a2a3e"))
         btn_min.clicked.connect(self._parent.showMinimized)
         layout.addWidget(btn_min)
@@ -186,7 +190,7 @@ class OtelKayitApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.data_manager = DataManager()
-        self.setWindowTitle("Otel Kayit ve Oda Yonetim Sistemi")
+        self.setWindowTitle("Otel Kayıt ve Oda Yönetim Sistemi")
         self.setMinimumSize(1280, 720)
 
         # Frameless pencere
@@ -379,11 +383,8 @@ class OtelKayitApp(QMainWindow):
             f"  • {r.get('isim','')} {r.get('soyisim','')} — Oda {r.get('oda','')} — Giris: {r.get('giris','')}"
             for r in bekleyenler
         )
-        reply = QMessageBox.question(self, "Bekleyen Rezervasyonlar",
-            f"Giris tarihi gelen {len(bekleyenler)} rezervasyon var:\n\n{isimler}\n\n"
-            f"Rezervasyonlar sekmesine gitmek ister misiniz?",
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-        if reply == QMessageBox.Yes:
+        reply = show_question(self, "Bekleyen Rezervasyonlar", f"Giriş tarihi gelen {len(bekleyenler)} rezervasyon var:\n\n{isimler}\n\nRezerasyonlar sekmesine gitmek ister misiniz?")
+        if reply:
             self._switch_page(2)
 
     def _check_backup_warning(self):
@@ -391,21 +392,16 @@ class OtelKayitApp(QMainWindow):
             QTimer.singleShot(500, self._show_backup_warning)
 
     def _show_backup_warning(self):
-        msg = QMessageBox(self)
-        msg.setWindowTitle("Yedekleme Hatirlatmasi")
-        msg.setIcon(QMessageBox.Warning)
-        msg.setText(
-            "Son yedeklemenin uzerinden 30 gun gecti.\n\n"
-            f"Lutfen kayitlar.xlsx dosyasini yedekleyin.\n\n"
+        show_warning(self, "Yedekleme Hatırlatması",
+            f"Son yedeklemenin üzerinden 30 gün geçti.\n\n"
+            f"Lütfen kayıtlar.xlsx dosyasını yedekleyin.\n\n"
             f"Dosya: {self.data_manager.get_excel_path()}"
         )
-        msg.setStandardButtons(QMessageBox.Ok)
-        msg.exec_()
 
 
 def main():
     app = QApplication(sys.argv)
-    app.setApplicationName("Otel Kayit Sistemi")
+    app.setApplicationName("Otel Kayıt Sistemi")
     font = QFont("Segoe UI", 10)
     app.setFont(font)
     window = OtelKayitApp()
