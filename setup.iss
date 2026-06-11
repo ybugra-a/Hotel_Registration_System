@@ -1,8 +1,8 @@
 [Setup]
 AppId={{F4A2B1C3-9E5D-4F8A-B2C7-3D6E9A1F0B4C}
-AppName=Otel Kayit Sistemi
-AppVersion=0.4
-AppPublisher=Otel Yonetimi
+AppName=IOTA - Otel Kayıt ve Yönetim Sistemi
+AppVersion=0.6.1
+AppPublisher=IOTA
 DefaultDirName=C:\OtelKayit
 DefaultGroupName=Otel Kayit Sistemi
 DisableProgramGroupPage=yes
