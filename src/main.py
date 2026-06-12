@@ -109,7 +109,7 @@ class TitleBar(QWidget):
         layout.addWidget(title_lbl)
 
         # Versiyon
-        ver_lbl = QLabel("v0.6")
+        ver_lbl = QLabel("v0.7.1")
         ver_lbl.setStyleSheet("font-size: 8pt; color: #475569; background: transparent; padding-right: 20px; padding-top: 4px;")
         layout.addWidget(ver_lbl)
 

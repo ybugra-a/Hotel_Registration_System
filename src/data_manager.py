@@ -281,7 +281,7 @@ class DataManager:
         for row in ws.iter_rows(min_row=2, values_only=True):
             if not row[0]:
                 continue
-            if not tumu and row[10] == "İptal":
+            if not tumu and row[10] in ("İptal", "Tamamlandı"):
                 continue
             sonuc.append({
                 "id": row[0], "tc": row[1], "isim": row[2],
@@ -335,7 +335,7 @@ class DataManager:
                 for r in rezervasyonlar:
                     if str(r.get('oda', '')) != str(oda):
                         continue
-                    if r.get('durum') == 'İptal':
+                    if r.get('durum') != 'Beklemede':
                         continue
                     try:
                         giris = datetime.strptime(str(r.get('giris', '')), "%d/%m/%Y").date()

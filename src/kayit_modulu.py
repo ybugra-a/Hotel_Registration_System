@@ -1,6 +1,6 @@
 """
-Kayit Modulu - v0.4
-Yeni: Rezerve Et, Sirket Ismi, Blacklist kontrolu
+Kayit Modulu - v0.7
+Yeni: Rezerve Tablosu
 """
 
 from custom_dialog import show_info, show_warning, show_error, show_question

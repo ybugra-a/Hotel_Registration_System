@@ -111,7 +111,7 @@ def _find_misafir(rezervasyonlar, gun, oda):
     for r in rezervasyonlar:
         if str(r.get('oda', '')) != str(oda):
             continue
-        if r.get('durum') == 'Iptal':
+        if r.get('durum') in ('İptal', 'Tamamlandı', 'Iptal'):
             continue
         try:
             giris = datetime.strptime(str(r.get('giris', '')), "%d/%m/%Y").date()
@@ -146,7 +146,7 @@ def guncelle_tum_aylar(rezervasyonlar, odalar):
     """
     aylar = set()
     for r in rezervasyonlar:
-        if r.get('durum') == 'Iptal':
+        if r.get('durum') in ('İptal', 'Tamamlandı', 'Iptal'):
             continue
         try:
             giris = datetime.strptime(str(r.get('giris', '')), "%d/%m/%Y").date()

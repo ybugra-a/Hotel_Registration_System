@@ -425,6 +425,7 @@ class RezervasyonPaneli(QWidget):
                 f"{isim} için check-in yapılsın mı?\nRezervasyon aktif kayda dönüştürülecek."):
             if self.dm.rezervasyon_checkin(rezervasyon["id"]):
                 show_info(self, "Başarılı", f"{isim} check-in yapıldı!")
+                self.refresh()
                 self.guncelleme_gerekli.emit()
             else:
                 show_error(self, "Hata", "Check-in işlemi başarısız.")
