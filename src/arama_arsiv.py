@@ -98,7 +98,7 @@ class AramaArsiv(QWidget):
         alt_row.addStretch()
 
         btn_sil = QPushButton("Secili Kaydi Sil")
-        btn_sil.setObjectName("btnSil")
+        btn_sil.setObjectName("btnSilWide")
         btn_sil.clicked.connect(self._on_sil)
         alt_row.addWidget(btn_sil)
         main_layout.addLayout(alt_row)

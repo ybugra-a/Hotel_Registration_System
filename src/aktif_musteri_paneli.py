@@ -297,7 +297,6 @@ class MusteriKarti(QFrame):
 
         btn_sil = QPushButton("Sil")
         btn_sil.setObjectName("btnSil")
-        btn_sil.setFixedWidth(52)
         btn_sil.setFont(__import__("PyQt5.QtGui", fromlist=["QFont"]).QFont("Segoe UI", 9))
         btn_sil.clicked.connect(lambda: self.sil_clicked.emit(self.musteri))
         btn_row.addWidget(btn_sil)

@@ -42,7 +42,9 @@ class CustomDialog(QDialog):
         title_bar.mouseMoveEvent = self._on_move
 
         tb_layout = QHBoxLayout(title_bar)
-        tb_layout.setContentsMargins(16, 0, 8, 0)
+        tb_layout.setContentsMargins(16, 0, 4, 0)
+        tb_layout.setSpacing(0)
+        tb_layout.setAlignment(Qt.AlignVCenter)
 
         # Ikon
         icons = {"info": "ℹ", "warning": "⚠", "error": "✕", "question": "?"}
@@ -51,25 +53,30 @@ class CustomDialog(QDialog):
 
         icon_lbl = QLabel(icons.get(dialog_type, "ℹ"))
         icon_lbl.setStyleSheet(f"color: {icon_color}; font-size: 13pt; background: transparent;")
-        tb_layout.addWidget(icon_lbl)
+        icon_lbl.setAlignment(Qt.AlignCenter)
+        tb_layout.addWidget(icon_lbl, 0, Qt.AlignVCenter)
         tb_layout.addSpacing(8)
 
         title_lbl = QLabel(title)
         title_lbl.setStyleSheet("color: #ffffff; font-size: 10pt; font-weight: 600; background: transparent;")
-        tb_layout.addWidget(title_lbl)
+        tb_layout.addWidget(title_lbl, 0, Qt.AlignVCenter)
         tb_layout.addStretch()
 
         btn_close = QPushButton("✕")
-        btn_close.setFixedSize(32, 32)
+        btn_close.setFixedSize(40, 40)
         btn_close.setStyleSheet("""
             QPushButton {
                 background: transparent; color: #64748b;
-                border: none; font-size: 11pt; border-radius: 4px;
+                border: none; font-size: 12pt; border-radius: 4px;
+                min-width: 40px; max-width: 40px;
+                min-height: 40px; max-height: 40px;
+                qproperty-alignment: AlignCenter;
+                padding: 0px; margin: 0px;
             }
             QPushButton:hover { background: #dc2626; color: #ffffff; }
         """)
         btn_close.clicked.connect(self.reject)
-        tb_layout.addWidget(btn_close)
+        tb_layout.addWidget(btn_close, 0, Qt.AlignVCenter)
         main.addWidget(title_bar)
 
         # Ayirici

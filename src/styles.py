@@ -155,8 +155,19 @@ QPushButton {
     background-color: rgba(239,68,68,0.12);
     color: #f87171;
     border: 2px solid #ef4444;
+    padding: 6px 0; font-size: 9pt; min-height: 30px; border-radius: 6px;
+    min-width: 62px; max-width: 62px;
 }
 #btnSil:hover { background-color: rgba(239,68,68,0.25); color: #fca5a5; }
+
+/* Sil - genis metinli butonlar */
+#btnSilWide {
+    background-color: rgba(239,68,68,0.12);
+    color: #f87171;
+    border: 2px solid #ef4444;
+    padding: 6px 16px; font-size: 9pt; min-height: 32px; border-radius: 6px;
+}
+#btnSilWide:hover { background-color: rgba(239,68,68,0.25); color: #fca5a5; }
 
 /* Ara - Cyan */
 #btnAra {

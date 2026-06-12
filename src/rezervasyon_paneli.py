@@ -28,6 +28,19 @@ _COMBO_STYLE = """
     QComboBox QAbstractItemView::item:hover { background-color: #2a2a3e; color: #22c55e; }
 """
 
+_YOUTUBE_SCROLL_STYLE = """
+    QScrollArea { background: transparent; border: none; }
+    QScrollBar:vertical {
+        border: none; background: transparent; width: 12px; margin: 8px 4px 8px 0;
+    }
+    QScrollBar::handle:vertical {
+        background: rgba(161, 161, 170, 0.45); border-radius: 6px; min-height: 56px;
+    }
+    QScrollBar::handle:vertical:hover { background: rgba(161, 161, 170, 0.75); }
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; border: none; }
+    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
+"""
+
 GUN_ISIMLERI = {
     0: "Pazartesi", 1: "Salı", 2: "Çarşamba",
     3: "Perşembe", 4: "Cuma", 5: "Cumartesi", 6: "Pazar"
@@ -120,7 +133,6 @@ class RezervasyonKarti(QFrame):
 
         btn_sil = QPushButton("Sil")
         btn_sil.setObjectName("btnSil")
-        btn_sil.setFixedWidth(63)
         btn_sil.setFont(QFont("Segoe UI", 9))
         btn_sil.clicked.connect(lambda: self.sil_clicked.emit(self.rezervasyon))
         btn_row.addWidget(btn_sil)
@@ -306,12 +318,14 @@ class RezervasyonPaneli(QWidget):
         self.refresh()
 
     def _setup_ui(self):
-        # Ana scroll area — her şey içinde
-        main_scroll = QScrollArea()
-        main_scroll.setWidgetResizable(True)
-        main_scroll.setFrameShape(QFrame.NoFrame)
-        main_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        main_scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        # YouTube ana sayfa tarzi: tek dikey kaydirma, ince sag kizak
+        self.main_scroll = QScrollArea()
+        self.main_scroll.setWidgetResizable(True)
+        self.main_scroll.setFrameShape(QFrame.NoFrame)
+        self.main_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.main_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.main_scroll.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.main_scroll.setStyleSheet(_YOUTUBE_SCROLL_STYLE)
 
         main_widget = QWidget()
         main_widget.setStyleSheet("background: transparent;")
@@ -344,21 +358,11 @@ class RezervasyonPaneli(QWidget):
         sep.setStyleSheet("background-color: #2a2a3e;")
         kart_layout.addWidget(sep)
 
-        self.kart_scroll = QScrollArea()
-        self.kart_scroll.setWidgetResizable(True)
-        self.kart_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.kart_scroll.setFrameShape(QFrame.NoFrame)
-        self.kart_scroll.setFixedHeight(300)
-        self.kart_scroll.setStyleSheet("background: transparent;")
-
-        self.kart_widget = QWidget()
-        self.kart_widget.setStyleSheet("background: transparent;")
-        self.kart_layout = QVBoxLayout(self.kart_widget)
+        self.kart_layout = QVBoxLayout()
         self.kart_layout.setContentsMargins(0, 0, 0, 0)
         self.kart_layout.setSpacing(6)
         self.kart_layout.addStretch()
-        self.kart_scroll.setWidget(self.kart_widget)
-        kart_layout.addWidget(self.kart_scroll)
+        kart_layout.addLayout(self.kart_layout)
 
         main_layout.addWidget(kart_card)
 
@@ -383,11 +387,11 @@ class RezervasyonPaneli(QWidget):
 
         main_layout.addWidget(takvim_card)
 
-        main_scroll.setWidget(main_widget)
+        self.main_scroll.setWidget(main_widget)
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
-        outer.addWidget(main_scroll)
+        outer.addWidget(self.main_scroll)
 
     def refresh(self):
         # Kartları temizle

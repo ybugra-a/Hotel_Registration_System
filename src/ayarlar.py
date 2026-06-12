@@ -87,7 +87,7 @@ class Ayarlar(QWidget):
         oda_layout.addWidget(self.oda_listesi)
 
         btn_sil = QPushButton("Secili Odayi Sil")
-        btn_sil.setObjectName("btnSil")
+        btn_sil.setObjectName("btnSilWide")
         btn_sil.clicked.connect(self._sil_oda)
         oda_layout.addWidget(btn_sil)
         cols.addWidget(oda_card)

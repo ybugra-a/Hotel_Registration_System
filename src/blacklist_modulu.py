@@ -141,7 +141,7 @@ class BlacklistModulu(QWidget):
         sil_row = QHBoxLayout()
         sil_row.addStretch()
         btn_sil = QPushButton("Secili Kaydi Sil")
-        btn_sil.setObjectName("btnSil")
+        btn_sil.setObjectName("btnSilWide")
         btn_sil.clicked.connect(self._on_sil)
         sil_row.addWidget(btn_sil)
         liste_layout.addLayout(sil_row)
