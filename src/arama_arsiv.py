@@ -129,22 +129,22 @@ class AramaArsiv(QWidget):
         main_layout.addWidget(self.tablo)
 
     def _load_filtreler(self):
-        self.yil_combo.addItem("Tumu", "Tumu")
+        self.yil_combo.addItem("Tümü", "Tümü")
         for y in self.dm.get_yillar():
             self.yil_combo.addItem(y, y)
-        self.donem_combo.addItem("Tumu", "Tumu")
+        self.donem_combo.addItem("Tümü", "Tümü")
         for d in ["Q1","Q2","Q3","Q4"]:
             self.donem_combo.addItem(d, d)
-        self.durum_combo.addItem("Tumu", "Tumu")
+        self.durum_combo.addItem("Tümü", "Tümü")
         self.durum_combo.addItem("Aktif", "Aktif")
-        self.durum_combo.addItem("Cikis Yapti", "Cikis Yapti")
+        self.durum_combo.addItem("Çıkış Yaptı", "Çıkış Yaptı")
 
     def ara(self):
         filtre = {
             "arama": self.arama_edit.text().strip(),
-            "yil": self.yil_combo.currentData() or "Tumu",
-            "donem": self.donem_combo.currentData() or "Tumu",
-            "durum": self.durum_combo.currentData() or "Tumu",
+            "yil": self.yil_combo.currentData() or "Tümü",
+            "donem": self.donem_combo.currentData() or "Tümü",
+            "durum": self.durum_combo.currentData() or "Tümü",
         }
         kayitlar = self.dm.get_tum_kayitlar(filtre=filtre)
         self._fill_tablo(kayitlar)
@@ -205,7 +205,7 @@ class AramaArsiv(QWidget):
     def refresh(self):
         mevcut_yil = self.yil_combo.currentData()
         self.yil_combo.clear()
-        self.yil_combo.addItem("Tumu", "Tumu")
+        self.yil_combo.addItem("Tümü", "Tümü")
         for y in self.dm.get_yillar():
             self.yil_combo.addItem(y, y)
         self.ara()

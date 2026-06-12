@@ -518,12 +518,19 @@ class DataManager:
                             arama not in str(k['tc']).lower() and
                             arama not in str(k.get('sirket','')).lower()):
                             continue
-                    if filtre.get("yil","Tümü") != "Tümü" and k["yil"] != filtre["yil"]:
+                    yil_f = filtre.get("yil", "Tümü")
+                    if yil_f not in ("Tümü", "Tumu") and k["yil"] != yil_f:
                         continue
-                    if filtre.get("donem","Tümü") != "Tümü" and k["donem"] != filtre["donem"]:
+                    donem_f = filtre.get("donem", "Tümü")
+                    if donem_f not in ("Tümü", "Tumu") and k["donem"] != donem_f:
                         continue
-                    if filtre.get("durum","Tümü") != "Tümü" and k["durum"] != filtre["durum"]:
-                        continue
+                    durum_f = filtre.get("durum", "Tümü")
+                    if durum_f not in ("Tümü", "Tumu"):
+                        hedef = durum_f
+                        if durum_f == "Cikis Yapti":
+                            hedef = "Çıkış Yaptı"
+                        if k["durum"] != hedef:
+                            continue
                 sonuc.append(k)
         return sonuc
 
